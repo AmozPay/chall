@@ -55,11 +55,14 @@ def main():
     price_ingest = ExchangePriceIngest(args.data_directory)
     while True:
         for token_pair in price_ingest.token_pairs:
-            current_price = price_ingest.get_current_price(token_pair)
+            timestamp, current_price = price_ingest.get_current_price(token_pair)
+            print(token_pair, timestamp)
+            print(current_price)
             producer.send(
                 topic="prices",
                 key=bytes(token_pair, 'utf-8'),
                 value=bytes(json.dumps(current_price), 'utf-8'),
+                timestamp_ms=timestamp
             )
         sleep(args.interval)
 
