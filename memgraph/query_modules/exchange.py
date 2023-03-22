@@ -12,15 +12,26 @@ class TradeRelation:
         self._exchange = exchange
         self._rate_parameters = rate_parameters
 
+    def __compute_reverse_rates(self) -> Dict[str, float] :
+        reverse_rates = dict(self._rate_parameters)
+        del reverse_rates['transaction_amount']
+        for key, value in reverse_rates.items():
+            if key != 'timestamp' and key != 'transaction_amount':
+                reverse_rates[key] = 1 / value if value != 0 else 0
+        return reverse_rates
+
+    def __rates_to_GQL_query_properties(self, rates: Dict[str, float], key: str) -> str:
+        rates_array = map(lambda kv: f"{key}.{kv[0]} = {kv[1]}", rates.items())
+        return ",".join(rates_array)
 
     def get_create_query(self) -> str:
-        rates_array = map(lambda kv: f"r.{kv[0]} = {kv[1]}", self._rate_parameters.items())
-        rates = ",".join(rates_array)
-
+        rates = self.__rates_to_GQL_query_properties(self._rate_parameters, 'ra')
+        reverse_rates = self.__rates_to_GQL_query_properties(self.__compute_reverse_rates(), 'rb')
         create_query = f"MATCH (a:Token {{ name: '{self._token_a}' }}), (b:Token {{ name: '{self._token_b}' }})\n"
-        create_query += f"MERGE (a) <-[r:SELLS_TO {{ exchange: '{self._exchange}', rate_direction: '{self._token_b}/{self._token_a}' }}]-> (b)\n"
-        create_query += f"SET {rates}"
-        create_query += f"RETURN a, r, b;"
+        create_query += f"MERGE (a) -[ra:SELLS_TO {{ exchange: '{self._exchange}' }}]-> (b)"
+        create_query += f" -[rb:SELLS_TO {{ exchange: '{self._exchange}' }}]-> (a)\n"
+        create_query += f"SET {', '.join([rates, reverse_rates])}\n"
+        create_query += f"RETURN a, ra, rb, b;"
         return create_query
 
 def create_token_if_not_exists(token: str, result_queries: List[mgp.Record]) -> None:
