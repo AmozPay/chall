@@ -70,3 +70,30 @@ services:
       - core
     networks:
       - app-tier
+  questdb:
+    image: questdb/questdb:6.6.1
+    hostname: questdb
+    container_name: questdb
+    ports:
+      - "9000:9000"
+      - "9009:9009"
+      - "8812:8812"
+    networks:
+      - app-tier
+    logging:
+      driver: none
+  questdb_kafka_consumer:
+    build: ./time_series
+    env_file:
+      - ./.env
+    environment:
+      KAFKA_IP: kafka
+      KAFKA_PORT: 9092
+      QDB_PORT: 8812
+      QDB_HOST: questdb
+    networks:
+      - app-tier
+    depends_on:
+      - questdb
+      - kafka
+    restart: always

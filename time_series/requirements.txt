@@ -1,0 +1,3 @@
+questdb==1.1.0
+psycopg2-binary==2.9.5
+kafka-python==2.0.2

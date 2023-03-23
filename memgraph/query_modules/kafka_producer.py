@@ -59,15 +59,11 @@ def send_best_trade_paths(
                     'to': edge.to_vertex.properties.get('name'),
                     'opening_price': edge.properties.get('opening_price')
                 }, edges))
-        logger.debug('sending data to kafka')
-        logger.debug('data: ')
-        logger.debug(json.dumps(best_paths_by_token_pair))
         producer(kafka_addr).send(
             topic='best_routes',
             key=bytes(exchange, 'utf-8'),
             value=bytes(json.dumps(best_paths_by_token_pair), 'utf-8')
         )
-        logger.debug('success')
     return mgp.Record()
 
 @mgp.read_proc
@@ -85,18 +81,12 @@ def send_best_exchanges(
             if result == None:
                 continue
             cheapest_exchange, cheapest_price = result
-            logger.debug('sending data to kafka:')
-            logger.debug(json.dumps({
-                    'exchange': cheapest_exchange,
-                    'rate': cheapest_price
-                }), 'utf-8')
             producer(kafka_addr).send(
                 topic='best_rates',
-                key=bytes(f"{a_name}/{b_name}", 'utf-8'),
+                key=bytes(f"{a_name}_{b_name}", 'utf-8'),
                 value=bytes(json.dumps({
                     'exchange': cheapest_exchange,
                     'rate': cheapest_price
                 }), 'utf-8')
             )
-            logger.debug('success')
     return mgp.Record()
