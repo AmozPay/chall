@@ -32,7 +32,7 @@ services:
     networks:
       - app-tier
   memgraph-mage:
-    image: "memgraph/memgraph-platform"
+    build: ./memgraph
     entrypoint: ["/usr/bin/supervisord"]
     environment:
       - MEMGRAPH="--log-level=TRACE"
