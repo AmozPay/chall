@@ -80,13 +80,13 @@ def send_best_exchanges(
             result = _buy_from_a_to_b(context, a_name, b_name)
             if result == None:
                 continue
-            cheapest_exchange, cheapest_price = result
             producer(kafka_addr).send(
                 topic='best_rates',
                 key=bytes(f"{a_name}_{b_name}", 'utf-8'),
                 value=bytes(json.dumps({
-                    'exchange': cheapest_exchange,
-                    'rate': cheapest_price
-                }), 'utf-8')
+                    'exchange': result.properties.get('exchange'),
+                    'rate': result.properties.get('opening_price')
+                }), 'utf-8'),
+                timestamp_ms=result.properties.get('timestamp')
             )
     return mgp.Record()

@@ -1,12 +1,12 @@
 import mgp
-from typing import Dict, Tuple
+from typing import Dict, Tuple, List
 logger = mgp.Logger()
 
 def _buy_from_a_to_b(
     context: mgp.ProcCtx,
     token_a: str,
     token_b: str
-) -> Tuple[str, float] or None:
+) -> mgp.Edge or None:
     node_a: mgp.Vertex = None
     vertex: mgp.Vertex
     paths: Dict[str, float] = {}
@@ -18,19 +18,21 @@ def _buy_from_a_to_b(
     if node_a == None:
         return None
     edge: mgp.Edge
+    edges: List[mgp.Edge] = []
     for edge in node_a.out_edges:
         if edge.to_vertex.properties.get('name') == token_b:
+            edges.append(edge)
             paths[edge.properties.get('exchange')] = edge.properties.get('opening_price')
-
-    if len(paths.items()) == 0:
+    if len(edges) == 0:
         return None
-    cheapest_price: float = float('inf')
-    cheapest_exchange: str
-    for exchange, price in paths.items():
-        if price < cheapest_price:
-            cheapest_price = price
-            cheapest_exchange = exchange
-    return (cheapest_exchange, cheapest_price)
+    cheapest_edge: mgp.Edge = None
+    for edge in edges:
+        if cheapest_edge == None or (
+            cheapest_edge.properties.get('opening_price')
+            > edge.properties.get('opening_price')
+        ):
+            cheapest_edge = edge
+    return cheapest_edge
 
 @mgp.read_proc
 def buy_from_a_to_b(
@@ -41,5 +43,4 @@ def buy_from_a_to_b(
     result = _buy_from_a_to_b(context, token_a, token_b)
     if result == None:
         return mgp.Record(exchange=None, price=None)
-    cheapest_exchange, cheapest_price = result
-    return mgp.Record(exchange=cheapest_exchange, price=cheapest_price)
+    return mgp.Record(exchange=result.properties.get('exchange'), price=result.properties.get('opening_price'))
