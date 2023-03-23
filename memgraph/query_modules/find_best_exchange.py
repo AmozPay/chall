@@ -19,10 +19,10 @@ def _buy_from_a_to_b(
         return None
     edge: mgp.Edge
     for edge in node_a.out_edges:
-        if edge.from_vertex.properties.get('name') == token_b:
+        if edge.to_vertex.properties.get('name') == token_b:
             paths[edge.properties.get('exchange')] = edge.properties.get('opening_price')
 
-    if len(paths) == 0:
+    if len(paths.items()) == 0:
         return None
     cheapest_price: float = float('inf')
     cheapest_exchange: str
