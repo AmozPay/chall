@@ -71,7 +71,7 @@ def send_best_trade_paths(
     return mgp.Record()
 
 @mgp.read_proc
-def send_best_exchange(
+def send_best_exchanges(
     context: mgp.ProcCtx,
     kafka_addr: str
 ) -> mgp.Record():
